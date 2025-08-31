@@ -6,14 +6,14 @@ import base64
 import time
 
 # Set the page title for the browser tab
-st.set_page_config(page_title="Converter Chatbot")
+st.set_page_config(page_title="Cost Engineering Bot")
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 print("Script started")  # Debug print
 
 # Static image with CSS to center and shift upward using transform
-image_path = "avl_logo.png"
+image_path = "rimac.svg"
 if os.path.exists(image_path):
     with open(image_path, "rb") as image_file:
         encoded = base64.b64encode(image_file.read()).decode()
@@ -25,7 +25,7 @@ if os.path.exists(image_path):
                 padding-top: 0px; /* Ensure no extra padding pushes image down */
             }}
             .image-container img {{
-                max-width: 300px;
+                max-width: 500px;
                 height: auto;
                 display: block;
                 margin: 0 auto; /* Center horizontally */
@@ -55,7 +55,7 @@ if os.path.exists(image_path):
             }}
             </style>
             <div class="image-container">
-                <img src="data:image/png;base64,{encoded}" alt="Converter Technology Logo">
+                <img src="data:image/svg+xml;base64,{encoded}" alt="Rimac Logo">
             </div>
             """,
             unsafe_allow_html=True
@@ -78,7 +78,7 @@ def get_response():
         response = openai.chat.completions.create(
             model="gpt-4.1",
             messages=messages,
-            temperature=0.7,
+            temperature=1
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -86,8 +86,30 @@ def get_response():
 
 # Define SYSTEM_PROMPT
 SYSTEM_PROMPT = """
-You are an expert in the design and manufacturing of power converters specifically used for automotive component testing, with a focus on e-drive testing systems. Respond only to questions related to the design, manufacturing, or testing applications of power converters for high-speed, high-power, and high-torque dynamometer systems. Highlight technical aspects such as SiC MOSFET-based power electronics, switching frequencies up to 48 kHz, control frequencies up to 192 kHz, and integration with dynamometers for e-motor validation. If off-topic (e.g., general electronics or non-automotive converters), politely say: 'Sorry, I specialize in power converters for automotive component testing—please ask about design, manufacturing, or testing for e-drive systems.'
-Provide detailed, technical answers based on industry knowledge and typical specifications where applicable.
+You are the Bugatti Rimac Cost Engineering Assistant. Bugatti Rimac is a Croatian EV hypercar manufacturer.
+Your mission is to support cost engineers in building **structured, replicable cost models** for vehicle components, with a focus on **chassis and powertrain** for electric hypercars. 
+There are only three possible types of responses: 
+1.) Responses that create cost models
+2.) Responses that explain and clarify cost models 
+3.) Response if user goes off topic - politely and briefly remind user of your main objective and never agree to go off topic.
+
+### Core Principles:
+- Think like a senior cost engineer with deep knowledge of chassis and powertrain components.  
+- Always deconstruct a component into **sequential manufacturing steps** 
+- For each step, identify **all relevant cost drivers**
+
+### Output Format for cost model response (mandatory):
+For every request for cost model creation, output a cost model in the following **table structure**:
+
+| Manufacturing Step | Description | Material Drivers | Tooling Drivers | Machine/Process Time | Labor | Energy | Overhead | Logistics | Scrap/Quality Loss | Benchmarking Notes |
+|--------------------|-------------|------------------|-----------------|----------------------|-------|--------|----------|-----------|--------------------|--------------------|
+
+### Responsibilities:
+1. **Process Deconstruction**: List all manufacturing steps in logical order.  
+2. **Cost Driver Assignment**: For each step, populate the table with cost drivers. When necessary, precisely specify material number, tool and even standard for corresponding procedure (standard only if exists for particular step)
+3. **Benchmarking Insight**: Provide comparisons, alternatives, or validation notes which have influence on cost modeling
+
+
 """
 
 # Create a container for the chat input and footer to render immediately after logo
@@ -111,7 +133,16 @@ chat_container = st.container()
 # Display predefined first message and chat history
 with chat_container:
     if not st.session_state.initialized:
-        first_message = "Hello! I’m your Power Converter Assistant, specializing in the design, manufacturing, and testing of power converters for automotive component testing, particularly e-drive systems. I can provide detailed insights into high-speed, high-power, and high-torque dynamometer applications, including SiC MOSFET-based electronics. Feel free to ask me anything related to these topics!"
+        first_message = """Hello! This is Hypercar Cost Modeling tool.  
+
+Main objective is to support cost engineers in two key ways:  
+1. Help them build **structured cost models** for chassis and powertrain components, breaking each part down into manufacturing steps with detailed cost drivers.  
+2. **Explain and clarify** any part of a cost model, so they understand how processes and drivers contribute to the total cost.  
+
+Feel free to name any chassis or powertrain component, and the tool will attempt to create a cost model that reflects the cost breakdown of that component.  
+
+All of tool's outputs follow a standardized structure, making them ready for benchmarking and cost database integration.  
+"""
         st.session_state.messages.append({"role": "assistant", "content": first_message})
         with st.chat_message("assistant"):
             "".join(char for char in st.write_stream(type_writer(first_message)))
