@@ -76,7 +76,7 @@ def get_response():
         # Build the full message history including the system prompt
         messages = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
         response = openai.chat.completions.create(
-            model="gpt-4.1",
+            model="gpt-5.1",
             messages=messages,
             temperature=1
         )
